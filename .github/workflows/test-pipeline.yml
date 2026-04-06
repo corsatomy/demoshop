@@ -74,7 +74,10 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Install Playwright browsers
-        run: pwsh DemoShop.Playwright.Tests/bin/Release/net8.0/playwright.ps1 install --with-deps
+        run: |
+          dotnet tool install -g Microsoft.Playwright.CLI
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          playwright install --with-deps
 
       - name: Run Playwright Tests (Manual Credentials)
         if: steps.validate_creds.outputs.use_secrets == 'false'
