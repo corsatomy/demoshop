@@ -11,7 +11,7 @@ namespace DemoShop.Playwright.Tests.Tests;
 public class SmokeTests : PageTest
 {
     [Test]
-    public async Task addTShirtToCartTest()
+    public async Task purchaseTShirtTest()
     {
         var baseUrl = UrlSettings.BaseUrl;
         var clientInfo = ClientInfo.Default;
@@ -79,7 +79,5 @@ public class SmokeTests : PageTest
             );
         });
         logStepFinished("Finish payment");
-
-        await Page.WaitForTimeoutAsync(20000);
     }
 }
