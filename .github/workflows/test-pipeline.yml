@@ -19,6 +19,22 @@ on:
           - 'Input credentials (manual)'
           - 'Use GitHub Secrets'
         default: 'Input credentials (manual)'
+  workflow_call:
+    inputs:
+      username:
+        description: 'Login username (leave empty to use secret)'
+        required: false
+        type: string
+      use_secrets:
+        description: 'Use stored GitHub secrets instead of inputs'
+        required: false
+        type: string
+        default: 'Use GitHub Secrets'
+    secrets:
+      TEST_USERNAME:
+        required: false
+      TEST_PASSWORD:
+        required: false
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -34,11 +50,11 @@ jobs:
       - name: Validate credentials input
         id: validate_creds
         run: |
-          if [ "${{ github.event.inputs.use_secrets }}" = "Use GitHub Secrets" ]; then
+          if [ "${{ inputs.use_secrets }}" = "Use GitHub Secrets" ]; then
             echo "Using GitHub Secrets for credentials"
             echo "use_secrets=true" >> $GITHUB_OUTPUT
           else
-            if [ -z "${{ github.event.inputs.username }}" ] || [ -z "${{ github.event.inputs.password }}" ]; then
+            if [ -z "${{ inputs.username }}" ] || [ -z "${{ inputs.password }}" ]; then
               echo "Error: Username and password are required when 'Input credentials (manual)' is selected"
               exit 1
             fi
@@ -64,8 +80,8 @@ jobs:
         if: steps.validate_creds.outputs.use_secrets == 'false'
         run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-build --verbosity normal
         env:
-          TEST_USERNAME: ${{ github.event.inputs.username }}
-          TEST_PASSWORD: ${{ github.event.inputs.password }}
+          TEST_USERNAME: ${{ inputs.username }}
+          TEST_PASSWORD: ${{ inputs.password }}
 
       - name: Run Playwright Tests (GitHub Secrets)
         if: steps.validate_creds.outputs.use_secrets == 'true'
