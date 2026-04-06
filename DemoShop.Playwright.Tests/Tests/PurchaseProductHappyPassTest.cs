@@ -16,8 +16,6 @@ public class SmokeTests : PageTest
         var baseUrl = UrlSettings.BaseUrl;
         var clientInfo = ClientInfo.Default;
         
-        // Retrieve credentials from environment variables (set by CI/CD pipeline)
-        // Falls back to default values if not provided
         var username = Environment.GetEnvironmentVariable("TEST_USERNAME") ?? "standard_user";
         var password = Environment.GetEnvironmentVariable("TEST_PASSWORD") ?? "secret_sauce";
 
