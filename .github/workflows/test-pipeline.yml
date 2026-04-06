@@ -1,0 +1,82 @@
+name: DemoShop Test Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: 'Login username (leave empty to use secret)'
+        required: false
+        type: string
+      password:
+        description: 'Login password (leave empty to use secret)'
+        required: false
+        type: password
+      use_secrets:
+        description: 'Use stored GitHub secrets instead of inputs'
+        required: true
+        type: choice
+        options:
+          - 'Input credentials (manual)'
+          - 'Use GitHub Secrets'
+        default: 'Input credentials (manual)'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate credentials input
+        id: validate_creds
+        run: |
+          if [ "${{ github.event.inputs.use_secrets }}" = "Use GitHub Secrets" ]; then
+            echo "Using GitHub Secrets for credentials"
+            echo "use_secrets=true" >> $GITHUB_OUTPUT
+          else
+            if [ -z "${{ github.event.inputs.username }}" ] || [ -z "${{ github.event.inputs.password }}" ]; then
+              echo "Error: Username and password are required when 'Input credentials (manual)' is selected"
+              exit 1
+            fi
+            echo "Using manually provided credentials"
+            echo "use_secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Install Playwright
+        run: dotnet tool install -g Microsoft.Playwright.CLI && playwright install
+
+      - name: Run Playwright Tests (Manual Credentials)
+        if: steps.validate_creds.outputs.use_secrets == 'false'
+        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-build --verbosity normal
+        env:
+          TEST_USERNAME: ${{ github.event.inputs.username }}
+          TEST_PASSWORD: ${{ github.event.inputs.password }}
+
+      - name: Run Playwright Tests (GitHub Secrets)
+        if: steps.validate_creds.outputs.use_secrets == 'true'
+        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-build --verbosity normal
+        env:
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/test-results/'

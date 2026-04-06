@@ -15,6 +15,11 @@ public class SmokeTests : PageTest
     {
         var baseUrl = UrlSettings.BaseUrl;
         var clientInfo = ClientInfo.Default;
+        
+        // Retrieve credentials from environment variables (set by CI/CD pipeline)
+        // Falls back to default values if not provided
+        var username = Environment.GetEnvironmentVariable("TEST_USERNAME") ?? "standard_user";
+        var password = Environment.GetEnvironmentVariable("TEST_PASSWORD") ?? "secret_sauce";
 
         var loginPage = new LoginPage(Page);
         var productListPage = new ProductListPage(Page);
@@ -29,10 +34,10 @@ public class SmokeTests : PageTest
         Assert.That(loginPage.waitForLoginPageLoaded(), Is.True, "Login page did not load in time.");
         logStepFinished("Navigate to Sauce Demo page");
 
-        logStep("Login with standard_user credentials");
+        logStep("Login with provided credentials");
         loginPage.loginToSystem(
-            username: "standard_user",
-            password: "secret_sauce");
+            username: username,
+            password: password);
         Assert.That(productListPage.waitForProductListPageLoaded(), Is.True, "Product list page did not load.");
         logStepFinished("Login with standard_user credentials");
 
