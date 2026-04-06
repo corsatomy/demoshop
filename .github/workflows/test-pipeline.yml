@@ -73,19 +73,19 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Install Playwright
-        run: dotnet tool install -g Microsoft.Playwright.CLI && playwright install
+      - name: Install Playwright browsers
+        run: pwsh DemoShop.Playwright.Tests/bin/Release/net8.0/playwright.ps1 install --with-deps
 
       - name: Run Playwright Tests (Manual Credentials)
         if: steps.validate_creds.outputs.use_secrets == 'false'
-        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-restore --verbosity normal
         env:
           TEST_USERNAME: ${{ inputs.username }}
           TEST_PASSWORD: ${{ inputs.password }}
 
       - name: Run Playwright Tests (GitHub Secrets)
         if: steps.validate_creds.outputs.use_secrets == 'true'
-        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test DemoShop.Playwright.Tests/DemoShop.Playwright.Tests.csproj --configuration Release --no-restore --verbosity normal
         env:
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
